@@ -1,10 +1,9 @@
 # this script deploys MadMaestro but increases entropy
 # TODO add the CMSSW stuff to install instructions
-eval `scram runtime -sh`
-cd $CMSSW_BASE/src
 
-git clone https://github.com/gmestdac/MadMaestro.git
-cd MadMaestro
+# eval `scram runtime -sh`
+# cd $CMSSW_BASE/src
+
 location="$(pwd)"
 wget https://launchpad.net/mg5amcnlo/2.0/2.6.x/+download/MG5_aMC_v2.6.3.2.tar.gz
 tar -xf MG5_aMC_v2.6.3.2.tar.gz

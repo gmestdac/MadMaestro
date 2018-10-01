@@ -161,8 +161,8 @@
 
 #! lhapdf-config
 #!  If None: try to find one available on the system
-#!lhapdf = /storage_mnt/storage/user/gmestdac/MadMaestro/LHAPDF/bin/lhapdf-config
-# @@@@replacethisstring
+#!lhapdf = ~/MadMaestro/LHAPDF/bin/lhapdf-config
+#TOBEREPLACEDBYSCRIPT
 
 #! fastjet-config
 #!  If None: try to find one available on the system

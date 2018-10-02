@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # this script deploys MadMaestro but increases entropy
 # TODO add the CMSSW stuff to install instructions
 
@@ -10,7 +12,6 @@ tar -xf MG5_aMC_v2.6.3.2.tar.gz
 rm MG5_aMC_v2.6.3.2.tar.gz
 
 cd MG5_aMC_v2_6_3_2/models/
-# TODO get the modified HEL model in there somehow
 wget https://feynrules.irmp.ucl.ac.be/raw-attachment/wiki/dim6top/dim6top_LO_UFO.tar.gz
 tar -xf dim6top_LO_UFO.tar.gz
 rm dim6top_LO_UFO.tar.gz

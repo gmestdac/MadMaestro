@@ -15,8 +15,8 @@ cd MG5_aMC_v2_6_3_2/models/
 wget https://feynrules.irmp.ucl.ac.be/raw-attachment/wiki/dim6top/dim6top_LO_UFO.tar.gz
 tar -xf dim6top_LO_UFO.tar.gz
 rm dim6top_LO_UFO.tar.gz
-cd..
-cd.. 
+cd ..
+cd .. 
 tar -xf ./templates/modHEL_UFO.tar.gz -C ./MG5_aMC_v2_6_3_2/models/
 wget http://www.hepforge.org/archive/lhapdf/LHAPDF-6.2.1.tar.gz
 tar xf LHAPDF-6.2.1.tar.gz
@@ -28,7 +28,7 @@ make
 make install
 cd ..
 rm -rf LHAPDF-6.2.1 
-# 
+
 lhapdfpath=$(readlink -e ./LHAPDF/bin/lhapdf-config) 
 sed "s|TOBEREPLACEDBYSCRIPT| lhapdf = $lhapdfpath|g" ./templates/mg5_configuration.txt > ./MG5_aMC_v2_6_3_2/input/mg5_configuration.txt
 # making the standard set restrict files

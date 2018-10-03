@@ -6,7 +6,7 @@ import pprint
 import itertools
 import glob
 
-argParser = argparse.ArgumentParser(description = "Argument parser for MadMaesto. get help for any of the functions below by typing its name before --help")
+argParser = argparse.ArgumentParser(description = "Argument parser for Composer. get help for any of the functions below by typing its name before --help")
 subparsers = argParser.add_subparsers(dest='subparser_name')
 
 add_Parser = subparsers.add_parser('add')
@@ -27,8 +27,9 @@ add_Parser.add_argument('name',                     action='store',    choices=a
 add_Parser.add_argument('-c','--coeff',             action='append',        nargs=4,                        help="Scan over a coefficient, needs 4 arguments: coefficient, begin, end, number of values. Add this multiple times to perform 2D scans pairs of all speciefied operators. The SM case will always be included.", metavar=('COEFF', 'BEGIN', 'END', 'NUMBER'))
 add_Parser.add_argument('-n','--nEvents',           action='store',         default = 10000,    type=int,   help="Number of Events" )
 add_Parser.add_argument('-o','--overwrite',         action='store_true',    default=False,                  help="Overwrite exisiting results, deletion of existing files and results is done when requesting")
-add_Parser.add_argument('--keepWorkspace',          action='store_true',    default=False,                  help="keep the MadGraph event folder?")
+add_Parser.add_argument('--keepWorkspace','-k',    action='store_true',    default=False,                  help="keep the MadGraph event folder?")
 add_Parser.add_argument('-s',"--specific",          action="append",        nargs=4,                        help="Define specific coefficient values instead of scanning. Can be specified multiple times. Format: c1 c2 c1value c2value. If c1=c2 adds c1value 1 and 2 to the corresponding 1D data")
+add_Parser.add_argument('-p','--priority',          action='store_true',    default=False,                  help="Make MadMaestro run these first")
 
 # argument parser for removing datapoints
 remove_Parser.add_argument('name',                  action='store', choices=avNames,                        help="Name op the dataset to add requests to")
@@ -73,7 +74,7 @@ def addName(name, model, procTemplate, restrictSet):
     index.update({name: [model, procTemplate, restrictSet]})
     numpy.savez("requested.npz", index=index, data=data)
 
-def addRequests(name, op1, op2, opVals, overWrite, keepWorkspace, nEvents ):
+def addRequests(name, op1, op2, opVals, overWrite, keepWorkspace, nEvents, priority ):
     try:
         index = numpy.load("requested.npz")["index"].item()
     except:
@@ -90,9 +91,9 @@ def addRequests(name, op1, op2, opVals, overWrite, keepWorkspace, nEvents ):
             requestedVals = []
         for valPair in opVals:
             # The the boolean will be used to indicate whether the data is available, which TODO is his the way to go?
-            requestedVals.append( tuple((valPair,False,overWrite, keepWorkspace, nEvents)) )
+            requestedVals.append( tuple((valPair,False,overWrite, keepWorkspace, nEvents, priority)) )
+        requestedVals.append( tuple(((0,0) , False, overWrite, keepWorkspace, nEvents, priority)) )
         # remove duplicates
-        requestedVals.append( tuple(((0,0) , False, overWrite, keepWorkspace, nEvents)) )
         requestedVals = list(set(requestedVals))
         data.update({name: {(op1,op2): requestedVals}})
         numpy.savez("requested.npz", index=index, data=data)
@@ -122,15 +123,16 @@ def listData():
                 print(repr(oppair))
                 pairdata= data[name][oppair] 
                 for entry in pairdata:
+                    if(entry[5]):
+                        print('\033[1m')
                     if(entry[1] and entry[2]):
-                        print('yee')
                         print('\x1b[0;37;41m' + repr(entry[0]) + '\x1b[0m')
                     if(entry[1] and  not entry[2]):
-                        print('yeh')
                         print('\x1b[0;37;42m' + repr(entry[0]) + '\x1b[0m')
                     if(not entry[1]):
-                        print('yah')
                         print('\x1b[0;37;44m' + repr(entry[0]) + '\x1b[0m')
+                    if(entry[5]):
+                        print('\033[0m' )
         print(' ')
 
 # what function args.func() calls depends on the subparser being called 
@@ -142,7 +144,7 @@ def go():
             return
         if(len(args.coeff) == 1 ):
             opVals = numpy.linspace(round(float(args.coeff[0][1]),4), round(float(args.coeff[0][2]),4), num=int(args.coeff[0][3]))
-            addRequests(args.name, args.coeff[0][0], args.coeff[0][0], zip(opVals,opVals), overWrite, args.keepWorkspace, args.nEvents )
+            addRequests(args.name, args.coeff[0][0], args.coeff[0][0], zip(opVals,opVals), overWrite, args.keepWorkspace, args.nEvents, args.priority  )
         else:
             coeffValList = []
             for i in range(0,len(args.coeff)-1):
@@ -150,7 +152,7 @@ def go():
             combos = itertools.combinations(coeffValList, 2)
             combos = sorted(combos, key=lambda x: x[0])
             for pair in combos:
-                addRequests(args.name, pair[0][0], pair[1][0], zip(pair[0][1],pair[0][1]), overWrite, args.keepWorkspace, args.nEvents )
+                addRequests(args.name, pair[0][0], pair[1][0], zip(pair[0][1],pair[0][1]), overWrite, args.keepWorkspace, args.nEvents, args.priority )
 
     # elif(args.subparser_name =="remove"):
     elif(args.subparser_name =="addName"):
@@ -166,41 +168,3 @@ def go():
 # this makes sure that order.py runs as it should when started, but doesn't run when imorporting it from another script (strange but standard python behaviour)
 if __name__ == "__main__":
     go()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# CODE DUMP BELOW, HERE BE DRAGONS
-# def interface():
-    # if(args.action in ['add','request','a','r']):
-    #     if(args.specific):
-    #         addScan
-    #     else:
-
-    # if(args.action in ['delete','d']):
-    #     if(specific):
-    #         delete(     )
-    #     else:
-    #         deleteAll()
-    # if(args.action in ['addname','addName']):
-        
-    # if(args.action in ['removename','removeName']):
-
-    # else:
-    #     print("No action to be performed specified, check --help")
-    #     return

@@ -5,6 +5,7 @@ import numpy
 import pprint 
 import itertools
 import glob
+from decimal import *
 
 argParser = argparse.ArgumentParser(description = "Argument parser for Composer. get help for any of the functions below by typing its name before --help")
 subparsers = argParser.add_subparsers(dest='subparser_name')
@@ -92,10 +93,17 @@ def addRequests(name, op1, op2, opVals, overWrite, keepWorkspace, nEvents, prior
         for valPair in opVals:
             # The the boolean will be used to indicate whether the data is available, which TODO is his the way to go?
             requestedVals.append( tuple((valPair,False,overWrite, keepWorkspace, nEvents, priority)) )
-        requestedVals.append( tuple(((0,0) , False, overWrite, keepWorkspace, nEvents, priority)) )
+        # TODO fix the zero issue elsewhere
+        # requestedVals.append( tuple(((0,0) , False, overWrite, keepWorkspace, nEvents, priority)) )
         # remove duplicates
         requestedVals = list(set(requestedVals))
-        data.update({name: {(op1,op2): requestedVals}})
+        # print(data)
+        try:
+            data[name].update({(op1,op2): requestedVals})
+        except:
+                data.update({name: {(op1,op2): requestedVals}})
+        # print('\n \n')
+        # print(data)
         numpy.savez("requested.npz", index=index, data=data)
 
 def listNames():
@@ -117,42 +125,63 @@ def listData():
         data = {}
     finally:
         print('\n############### Available Data: ###############')
-        print('#green=available, red=to be overwritten, blue=requested#\n')
-        for name in data.keys():
+        # print('#Green=available, Red=to be overwritten, Blue=requested# | Bold=priority\n')
+        print('\x1b[37;41m' + 'Available' + '\x1b[0m | \x1b[37;44m  Requested \x1b[0m | \x1b[37;42m To be overwritten \x1b[0m || \033[1m Priority \033[0m' + '\n ')
+
+        # '\x1b[37;41m' + repr(entry[0]) + '\x1b[0m'
+        for name in sorted(data.keys()):
             for oppair in data[name].keys():
-                print(repr(oppair))
-                pairdata= data[name][oppair] 
+                # print(repr(oppair))
+                pairdata= sorted(data[name][oppair]) 
+                template = "|{0:8} | {1:8}|" # column widths: 8, 10, 15, 7, 10
+                print template.format('  ' + oppair[0],'  ' +  oppair[1]) # header
                 for entry in pairdata:
+                    toprint = ""
                     if(entry[5]):
-                        print('\033[1m')
+                        toprint += '\033[1m'
                     if(entry[1] and entry[2]):
-                        print('\x1b[0;37;41m' + repr(entry[0]) + '\x1b[0m')
+                        toprint +='\x1b[37;41m' + template.format(entry[0][0],entry[0][1]) + '\x1b[0m'
                     if(entry[1] and  not entry[2]):
-                        print('\x1b[0;37;42m' + repr(entry[0]) + '\x1b[0m')
+                        toprint +='\x1b[37;42m' + template.format(entry[0][0],entry[0][1]) + '\x1b[0m'
                     if(not entry[1]):
-                        print('\x1b[0;37;44m' + repr(entry[0]) + '\x1b[0m')
+                        toprint +='\x1b[37;44m' + template.format(entry[0][0],entry[0][1]) + '\x1b[0m'
                     if(entry[5]):
-                        print('\033[0m' )
+                        toprint +='\033[0m'
+                    print(toprint)
+                    # print(toprint.replace( "(Decimal('","" ).replace( "'), Decimal('"," | " ).replace( "'))","" ) )
+                    # print(entry[0])
+                    # print(template.format(entry[0][0],entry[0][1]))
+
         print(' ')
 
 # what function args.func() calls depends on the subparser being called 
 def go():
+    getcontext().prec = 4
     if(args.subparser_name =="add"):
         overWrite = args.overwrite
         if(len(args.coeff) == 0 ):
             print("no coefficient specified")
             return
         if(len(args.coeff) == 1 ):
-            opVals = numpy.linspace(round(float(args.coeff[0][1]),4), round(float(args.coeff[0][2]),4), num=int(args.coeff[0][3]))
+            opVals = numpy.linspace(float(args.coeff[0][1]), float(args.coeff[0][2]), num=int(args.coeff[0][3]))
+            opVals = [Decimal(x) + Decimal("0.00000000") for x in opVals]
             addRequests(args.name, args.coeff[0][0], args.coeff[0][0], zip(opVals,opVals), overWrite, args.keepWorkspace, args.nEvents, args.priority  )
         else:
             coeffValList = []
-            for i in range(0,len(args.coeff)-1):
-                coeffValList.append( tuple( (args.coeff[i][0], numpy.linspace(float(args.coeff[i][1]), float(args.coeff[i][2]), num=int(args.coeff[i][3])).round(4) ) ) )
-            combos = itertools.combinations(coeffValList, 2)
+            for i in range(0,len(args.coeff)):
+                # print("been here done that")
+                values = numpy.linspace( float(args.coeff[i][1]), float(args.coeff[i][2]), num=int(args.coeff[i][3]))
+                values = [Decimal(x) + Decimal("0.00000000") for x in values]
+                # print(values)
+                coeffValList.append( tuple( (args.coeff[i][0], values ) ) )
+            # print(coeffValList)
+            combos = list(itertools.combinations(coeffValList, 2))
             combos = sorted(combos, key=lambda x: x[0])
+            # print(combos)
             for pair in combos:
-                addRequests(args.name, pair[0][0], pair[1][0], zip(pair[0][1],pair[0][1]), overWrite, args.keepWorkspace, args.nEvents, args.priority )
+                # print(list(itertools.product(pair[0][1],pair[1][1])))
+                # print(list(itertools.product(pair[0][1],pair[1][1])))
+                addRequests(args.name, pair[0][0], pair[1][0], list(itertools.product(pair[0][1],pair[1][1])) , overWrite, args.keepWorkspace, args.nEvents, args.priority )
 
     # elif(args.subparser_name =="remove"):
     elif(args.subparser_name =="addName"):

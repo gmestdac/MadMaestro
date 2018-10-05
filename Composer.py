@@ -174,10 +174,11 @@ def go():
                 values = [Decimal(x) + Decimal("0.00000000") for x in values]
                 # print(values)
                 coeffValList.append( tuple( (args.coeff[i][0], values ) ) )
-            # print(coeffValList)
+            print(coeffValList)
             combos = list(itertools.combinations(coeffValList, 2))
-            combos = sorted(combos, key=lambda x: x[0])
-            # print(combos)
+            combos = [sorted(x) for x in combos]
+            # combos = sorted(combos, key=lambda x: x[0])
+            print(combos)
             for pair in combos:
                 # print(list(itertools.product(pair[0][1],pair[1][1])))
                 # print(list(itertools.product(pair[0][1],pair[1][1])))
